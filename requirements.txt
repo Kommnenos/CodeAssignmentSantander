@@ -1,0 +1,2 @@
+Faker~=37.4.2
+confluent-kafka
