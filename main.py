@@ -1,4 +1,4 @@
-from producer.dados_iot import dados_iot
+from producer.produtor_iot import dados_iot
 
 
 def main():
