@@ -1,7 +1,7 @@
 from confluent_kafka import Consumer
 import json
 
-def consumir_dados():
+def consumir_dados(evento_de_parada):
     consumer = Consumer({
         'bootstrap.servers': 'localhost:9092',
         'group.id': 'grupo-consumidor-iot',
@@ -12,7 +12,7 @@ def consumir_dados():
     print("Aguardando mensagens...\n (Pressione CTRL+C para sair)\n")
 
     try:
-        while True:
+        while not evento_de_parada.is_set():
             mensagem = consumer.poll(1.0)
 
             if mensagem is None:
@@ -33,5 +33,3 @@ def consumir_dados():
     finally:
         consumer.close()
 
-if __name__ == "__main__":
-    consumir_dados()

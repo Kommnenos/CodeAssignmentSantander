@@ -3,16 +3,16 @@ from confluent_kafka import Producer
 import json
 import datetime
 import random
+import time
 
-num_registros = 100
-ids_dispositivos = [f"sensor_{i:03d}" for i in range(10)]
-
-def dados_iot():
+def dados_iot(evento_de_parada):
+    ids_dispositivos = [f"sensor_{i:03d}" for i in range(10)]
     try:
+        print("Gerando dados...")
         produtor = Producer({'bootstrap.servers': 'localhost:9092'})
         fake = faker.Faker('pt_BR')
 
-        for i in range(num_registros):
+        while not evento_de_parada.is_set():
             leitura = {
                 "id_dispositivo": random.choice(ids_dispositivos),
                 "timestamp": datetime.datetime.now().isoformat(),
@@ -28,7 +28,8 @@ def dados_iot():
 
             leitura = json.dumps(leitura).encode('utf-8')
 
-            produtor.produce('iot-dados', leitura)
+            produtor.produce('iot-dados', leitura, callback=verificar_erro)
+            time.sleep(0.5)
 
         produtor.flush()
         print(f"Dados enviados com sucesso!")
@@ -46,3 +47,7 @@ def inserir_anomalia(leitura):
         leitura["pressao"] = 5000
     elif aux < 80:
         leitura["intensidade_luz"] = 200
+
+def verificar_erro(err, msg):
+    if err:
+        print(f"[Kafka Error] {err}")
