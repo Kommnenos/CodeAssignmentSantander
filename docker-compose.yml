@@ -9,7 +9,8 @@ services:
       - KAFKA_SCHEMAREGISTRY_ENABLED=false
       - CONSOLE_TELEMETRY_ENABLED=false
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
 
   kafka:
     image: bitnami/kafka:latest
@@ -32,6 +33,13 @@ services:
       - ALLOW_PLAINTEXT_LISTENER=yes
     volumes:
       - kafka_data:/bitnami/kafka
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server=localhost:29092 --list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
 
   postgres:
     image: postgres:15
@@ -45,23 +53,40 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 
   producer:
     build:
       context: .
       dockerfile: producer/Dockerfile
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     environment:
       - BOOTSTRAP_SERVERS=kafka:29092
+    healthcheck:
+      test: [ "CMD-SHELL", "python -c \"from confluent_kafka import Producer; p=Producer({'bootstrap.servers': 'kafka:29092'}); p.flush()\"" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 
   consumer:
     build:
       context: .
       dockerfile: consumer/Dockerfile
     depends_on:
-      - kafka
-      - postgres
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      producer:
+        condition: service_healthy
     environment:
       - BOOTSTRAP_SERVERS=kafka:29092
       - POSTGRES_HOST=postgres
@@ -69,6 +94,27 @@ services:
       - POSTGRES_DB=iot
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=12345
+    healthcheck:
+      test: [ "CMD-SHELL", "python -c \"from confluent_kafka.admin import AdminClient; AdminClient({'bootstrap.servers': 'kafka:29092'}).list_topics(timeout=2.0); from shared.db import conectar_postgres; conectar_postgres()\"" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "--quiet", "http://localhost:8080" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+
 
 
 volumes:

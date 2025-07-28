@@ -31,6 +31,7 @@ def consumir_dados(evento_de_parada):
                     db.inserir_leitura(conexao, leitura)
                     print(f"[✓ Armazenado] {leitura['id_dispositivo']} - {leitura}")
                 else:
+                    ## TODO make this red instead
                     print(f"[🚨 Anomalia] {leitura['id_dispositivo']} - {anomalias}")
 
             except json.JSONDecodeError:
