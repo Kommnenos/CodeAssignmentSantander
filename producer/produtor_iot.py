@@ -9,7 +9,7 @@ def dados_iot(evento_de_parada):
     ids_dispositivos = [f"sensor_{i:03d}" for i in range(10)]
     try:
         print("Gerando dados...")
-        produtor = Producer({'bootstrap.servers': 'localhost:9092'})
+        produtor = Producer({'bootstrap.servers': 'kafka:29092'})
         fake = faker.Faker('pt_BR')
 
         while not evento_de_parada.is_set():
@@ -51,3 +51,16 @@ def inserir_anomalia(leitura):
 def verificar_erro(err, msg):
     if err:
         print(f"[Kafka Error] {err}")
+
+
+if __name__ == "__main__":
+    from threading import Event
+    import time
+
+    stop_event = Event()
+    try:
+        dados_iot(stop_event)
+    except KeyboardInterrupt:
+        print("[Producer] Interrompido pelo usuário.")
+        stop_event.set()
+        time.sleep(1)

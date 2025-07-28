@@ -1,9 +1,11 @@
 from confluent_kafka import Consumer
 import json
+from shared import db
 
 def consumir_dados(evento_de_parada):
+    conexao = db.conectar_postgres()
     consumer = Consumer({
-        'bootstrap.servers': 'localhost:9092',
+        'bootstrap.servers': 'kafka:29092',
         'group.id': 'grupo-consumidor-iot',
         'auto.offset.reset': 'earliest',
     })
@@ -25,9 +27,11 @@ def consumir_dados(evento_de_parada):
                 leitura = json.loads(mensagem.value().decode('utf-8'))
                 anomalias = verificar_anomalias(leitura)
 
-                if anomalias:
-                    print(f"[Anomalia] {leitura['id_dispositivo']} - {anomalias} - ")
-                print(f"Leitura: {leitura}")
+                if not anomalias:
+                    db.inserir_leitura(conexao, leitura)
+                    print(f"[✓ Armazenado] {leitura['id_dispositivo']} - {leitura}")
+                else:
+                    print(f"[🚨 Anomalia] {leitura['id_dispositivo']} - {anomalias}")
 
             except json.JSONDecodeError:
                 print("Mensagem recebida, porém: erro ao decodificar")
@@ -37,6 +41,7 @@ def consumir_dados(evento_de_parada):
 
     finally:
         consumer.close()
+        conexao.close()
 
 def verificar_anomalias(leitura):
     anomalias = []
@@ -51,3 +56,16 @@ def verificar_anomalias(leitura):
         anomalias.append("intensidade de luz fora do intervalo")
 
     return anomalias
+
+
+if __name__ == "__main__":
+    from threading import Event
+    import time
+
+    stop_event = Event()
+    try:
+        consumir_dados(stop_event)
+    except KeyboardInterrupt:
+        print("[Consumer] Interrompido pelo usuário.")
+        stop_event.set()
+        time.sleep(1)

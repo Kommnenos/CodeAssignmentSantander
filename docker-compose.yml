@@ -33,7 +33,46 @@ services:
     volumes:
       - kafka_data:/bitnami/kafka
 
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: iot
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  producer:
+    build:
+      context: .
+      dockerfile: producer/Dockerfile
+    depends_on:
+      - kafka
+    environment:
+      - BOOTSTRAP_SERVERS=kafka:29092
+
+  consumer:
+    build:
+      context: .
+      dockerfile: consumer/Dockerfile
+    depends_on:
+      - kafka
+      - postgres
+    environment:
+      - BOOTSTRAP_SERVERS=kafka:29092
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=iot
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345
+
+
 volumes:
   kafka_data:
+  pg_data:
 
 
