@@ -19,5 +19,5 @@ docker-compose up
 | Serviço    | Endereço                                      | Notas                              |
 | ---------- | ---------------------------------------------- | ------------------------------------- |
 | Adminer    | [http://localhost:8081](http://localhost:8081) | Serviço PostgreSQL, servidor: postgres login: postgres, senha: 12345, db: iot |
-| Kafka UI   | [http://localhost:8080](http://localhost:8080) | (Redpanda Console, optional)          |
+| Redpanda Console   | [http://localhost:8080](http://localhost:8080) | Visualização do Kafka        |
 
