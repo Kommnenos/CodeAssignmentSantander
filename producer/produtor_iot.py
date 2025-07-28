@@ -3,13 +3,19 @@ from confluent_kafka import Producer
 import json
 import datetime
 import random
-import time
+import os
+
+NUMERO_DISPOSITIVOS = int(os.getenv("NUMERO_DISPOSITIVOS", 100))
+INTERVALO_MSG_SEGUNDOS = float(os.getenv("INTERVALO_MSG_SEGUNDOS", 0.5))
+NOME_TOPICO_PRINCIPAL = os.getenv("NOME_TOPICO_PRINCIPAL", "iot-dados")
+KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:29092")
+PROBABILIDADE_ANOMALIA = float(os.getenv("PROBABILIDADE_ANOMALIA", 0.15))
 
 def dados_iot(evento_de_parada):
-    ids_dispositivos = [f"sensor_{i:03d}" for i in range(10)]
+    ids_dispositivos = [f"sensor_{i:03d}" for i in range(NUMERO_DISPOSITIVOS)]
     try:
         print("Gerando dados...")
-        produtor = Producer({'bootstrap.servers': 'kafka:29092'})
+        produtor = Producer({'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS})
         fake = faker.Faker('pt_BR')
 
         while not evento_de_parada.is_set():
@@ -22,14 +28,14 @@ def dados_iot(evento_de_parada):
                 "intensidade_luz": fake.pyfloat(min_value=0, max_value=100, right_digits=1),
             }
 
-            if random.random() < 0.15:
+            if random.random() < PROBABILIDADE_ANOMALIA:
                 inserir_anomalia(leitura)
 
 
             leitura = json.dumps(leitura).encode('utf-8')
 
-            produtor.produce('iot-dados', leitura, callback=verificar_erro)
-            time.sleep(0.5)
+            produtor.produce(NOME_TOPICO_PRINCIPAL, leitura, callback=verificar_erro)
+            time.sleep(INTERVALO_MSG_SEGUNDOS)
 
         produtor.flush()
         print(f"Dados enviados com sucesso!")

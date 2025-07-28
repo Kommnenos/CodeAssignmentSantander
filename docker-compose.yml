@@ -64,6 +64,8 @@ services:
     build:
       context: .
       dockerfile: producer/Dockerfile
+    env_file:
+      - variables.env
     depends_on:
       kafka:
         condition: service_healthy
@@ -113,8 +115,6 @@ services:
       timeout: 3s
       retries: 5
       start_period: 10s
-
-
 
 
 volumes:

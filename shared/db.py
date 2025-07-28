@@ -26,3 +26,20 @@ def inserir_leitura(conn, leitura):
             leitura["intensidade_luz"]
         ))
     conn.commit()
+
+def inserir_anomalia(conn, leitura, campo, descricao, valor):
+    with conn.cursor() as cur:
+        cur.execute("""
+            INSERT INTO anomalias_iot (
+                id_dispositivo, timestamp,
+                campo, descricao, valor
+            ) VALUES (%s, %s, %s, %s, %s)
+        """, (
+            leitura["id_dispositivo"],
+            leitura["timestamp"],
+            campo,
+            descricao,
+            valor
+        ))
+    conn.commit()
+

@@ -29,9 +29,9 @@ def consumir_dados(evento_de_parada):
 
                 if not anomalias:
                     db.inserir_leitura(conexao, leitura)
-                    print(f"[✓ Armazenado] {leitura['id_dispositivo']} - {leitura}")
                 else:
-                    ## TODO make this red instead
+                    for campo, descricao, valor in anomalias:
+                        db.inserir_anomalia(conexao, leitura, campo, descricao, valor)
                     print(f"[🚨 Anomalia] {leitura['id_dispositivo']} - {anomalias}")
 
             except json.JSONDecodeError:
@@ -48,15 +48,19 @@ def verificar_anomalias(leitura):
     anomalias = []
 
     if leitura["temperatura"] < -50 or leitura["temperatura"] > 60:
-        anomalias.append("temperatura fora do intervalo")
+        anomalias.append(("temperatura", "fora do intervalo", leitura["temperatura"]))
+
     if leitura["umidade"] < 0 or leitura["umidade"] > 100:
-        anomalias.append("umidade fora do intervalo")
+        anomalias.append(("umidade", "fora do intervalo", leitura["umidade"]))
+
     if leitura["pressao"] < 800 or leitura["pressao"] > 1200:
-        anomalias.append("pressão fora do intervalo")
+        anomalias.append(("pressao", "fora do intervalo", leitura["pressao"]))
+
     if leitura["intensidade_luz"] < 0 or leitura["intensidade_luz"] > 150:
-        anomalias.append("intensidade de luz fora do intervalo")
+        anomalias.append(("intensidade_luz", "fora do intervalo", leitura["intensidade_luz"]))
 
     return anomalias
+
 
 
 if __name__ == "__main__":
