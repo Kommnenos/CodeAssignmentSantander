@@ -23,7 +23,12 @@ def consumir_dados(evento_de_parada):
 
             try:
                 leitura = json.loads(mensagem.value().decode('utf-8'))
+                anomalias = verificar_anomalias(leitura)
+
+                if anomalias:
+                    print(f"[Anomalia] {leitura['id_dispositivo']} - {anomalias} - ")
                 print(f"Leitura: {leitura}")
+
             except json.JSONDecodeError:
                 print("Mensagem recebida, porém: erro ao decodificar")
 
@@ -33,3 +38,16 @@ def consumir_dados(evento_de_parada):
     finally:
         consumer.close()
 
+def verificar_anomalias(leitura):
+    anomalias = []
+
+    if leitura["temperatura"] < -50 or leitura["temperatura"] > 60:
+        anomalias.append("temperatura fora do intervalo")
+    if leitura["umidade"] < 0 or leitura["umidade"] > 100:
+        anomalias.append("umidade fora do intervalo")
+    if leitura["pressao"] < 800 or leitura["pressao"] > 1200:
+        anomalias.append("pressão fora do intervalo")
+    if leitura["intensidade_luz"] < 0 or leitura["intensidade_luz"] > 150:
+        anomalias.append("intensidade de luz fora do intervalo")
+
+    return anomalias
