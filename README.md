@@ -8,7 +8,7 @@ git clone https://github.com/Kommnenos/Simulador-IoT.git
 docker-compose up
 ```
 - aguarde alguns minutos para que o sistema verifique que todos os serviços estão saudáveis
-
+- ctrl+c para parar
 ## O Sistema:
 - Irá armazenar as leituras de IoT em uma tabela
 - Irá armazenar as anomalias em outra tabela
